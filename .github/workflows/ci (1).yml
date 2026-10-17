@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel an in-progress run when a newer commit is pushed to the same branch / PR.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Backend integration tests (TC-01 to TC-07, TC-10) need a real PostgreSQL database.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: student_record_system_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Read by backend/src/config (NODE_ENV=test is set by the backend "test" script).
+      # The test setup creates this database if needed and applies backend/db/schema.sql.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/student_record_system_test
+      SESSION_SECRET: ci-only-session-secret
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check Node.js
+        run: |
+          node --version
+          npm --version
+
+      # The project code is uploaded in parts by the team. Each part (backend/, frontend/)
+      # is checked only once it exists, so the pipeline stays green until then and runs
+      # the real checks automatically as soon as the code arrives.
+      - name: Detect project parts
+        id: detect
+        shell: bash
+        run: |
+          for part in backend frontend; do
+            if [ -f "$part/package.json" ]; then
+              if [ ! -f "$part/package-lock.json" ]; then
+                echo "::error file=$part/package.json::$part/package-lock.json is missing. Commit the lockfile so CI can install the exact dependency versions with 'npm ci'."
+                exit 1
+              fi
+              echo "$part=true" >> "$GITHUB_OUTPUT"
+              echo "$part/ found - its install and test steps will run."
+            else
+              echo "$part=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::$part/ has not been uploaded yet - skipping its CI steps."
+            fi
+          done
+
+      - name: Cache npm downloads
+        if: steps.detect.outputs.backend == 'true' || steps.detect.outputs.frontend == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-node20-${{ hashFiles('backend/package-lock.json', 'frontend/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-node20-
+
+      # ---- Backend: Controller/API, Service and Data Access layers ----
+      - name: Install backend dependencies
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests (unit + integration)
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend
+        run: npm test -- --ci
+
+      # ---- Frontend: Presentation/UI layer ----
+      - name: Install frontend dependencies
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: npm test
+
+      - name: Build frontend
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: npm run build
