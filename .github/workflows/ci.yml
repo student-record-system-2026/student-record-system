@@ -75,6 +75,13 @@ jobs:
               echo "::notice::$part/ has not been uploaded yet - skipping its CI steps."
             fi
           done
+          # The UI entry point (main.jsx -> App.jsx) is wired in during integration; build only once it exists.
+          if [ -f frontend/src/main.jsx ]; then
+            echo "frontend_app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend_app=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::frontend/src/main.jsx not merged yet - skipping the frontend build."
+          fi
 
       - name: Cache npm downloads
         if: steps.detect.outputs.backend == 'true' || steps.detect.outputs.frontend == 'true'
@@ -91,10 +98,11 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      # --passWithNoTests: during the sprint, test files arrive with the code they test.
       - name: Run backend tests (unit + integration)
         if: steps.detect.outputs.backend == 'true'
         working-directory: backend
-        run: npm test -- --ci
+        run: npm test -- --ci --passWithNoTests
 
       # ---- Frontend: Presentation/UI layer ----
       - name: Install frontend dependencies
@@ -105,9 +113,9 @@ jobs:
       - name: Run frontend tests
         if: steps.detect.outputs.frontend == 'true'
         working-directory: frontend
-        run: npm test
+        run: npm test -- --passWithNoTests
 
       - name: Build frontend
-        if: steps.detect.outputs.frontend == 'true'
+        if: steps.detect.outputs.frontend_app == 'true'
         working-directory: frontend
         run: npm run build
