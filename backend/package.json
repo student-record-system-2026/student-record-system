@@ -1,0 +1,59 @@
+{
+  "name": "srs-backend",
+  "version": "1.0.0",
+  "description": "Student Record System v1.0 - backend (Controller/API, Business/Service and Data Access layers)",
+  "private": true,
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:create": "node scripts/db-create.js",
+    "db:schema": "node scripts/db-schema.js",
+    "db:seed": "node scripts/db-seed.js",
+    "db:setup": "node scripts/db-create.js && node scripts/db-schema.js && node scripts/db-seed.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand",
+    "test:unit": "cross-env NODE_ENV=test jest --selectProjects unit",
+    "test:integration": "cross-env NODE_ENV=test jest --runInBand --selectProjects integration"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^9.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^7.1.0",
+    "pg": "^8.13.1",
+    "student-record-system": "file:.."
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testTimeout": 30000,
+    "projects": [
+      {
+        "displayName": "unit",
+        "testEnvironment": "node",
+        "testMatch": [
+          "<rootDir>/tests/unit/**/*.test.js"
+        ]
+      },
+      {
+        "displayName": "integration",
+        "testEnvironment": "node",
+        "testMatch": [
+          "<rootDir>/tests/integration/**/*.test.js"
+        ],
+        "globalSetup": "<rootDir>/tests/helpers/globalSetup.js",
+        "setupFilesAfterEnv": [
+          "<rootDir>/tests/helpers/afterAll.js"
+        ]
+      }
+    ]
+  }
+}
