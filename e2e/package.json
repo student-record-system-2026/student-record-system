@@ -1,0 +1,16 @@
+{
+  "name": "srs-e2e",
+  "version": "1.0.0",
+  "description": "Student Record System v1.0 - browser system tests (optional; Test Plan 4.1 System Testing)",
+  "private": true,
+  "scripts": {
+    "browsers": "playwright install chromium",
+    "test": "node system.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  },
+  "dependencies": {
+    "student-record-system": "file:.."
+  }
+}
