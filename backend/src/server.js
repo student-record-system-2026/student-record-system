@@ -1,5 +1,10 @@
 'use strict';
 
+/**
+ * Server entry point: starts the Express app (SADS 2.2 monolith) on config.port, checks the
+ * database connection once at startup, and closes the connection pool on shutdown.
+ */
+
 const config = require('./config');
 const { createApp } = require('./app');
 const { pool } = require('./db/pool');
