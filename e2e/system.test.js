@@ -1,8 +1,10 @@
-// System tests (Test Plan 4.1 "System Testing"): drives the REAL running application in Chromium through
+// System tests (Test Plan 4.1 "System Testing"): drives the REAL running application in a browser through
 // the user interface, following TC-01, TC-02, TC-05, TC-06, TC-07 and the NFR-4 / NFR-8 checks.
 // Prerequisites: backend on :4000 and frontend on :5173 running, freshly seeded (npm run test:e2e does the seed).
 // Screenshots of each key screen are written to e2e/shots/.
-const { chromium } = require('playwright');
+// BROWSER=chromium (default) | firefox | webkit - the same walkthrough runs unchanged in each (NFR-6).
+const playwright = require('playwright');
+const BROWSER = process.env.BROWSER || 'chromium';
 const BASE = process.env.E2E_BASE_URL || 'http://localhost:5173';
 const SHOTS = __dirname + '/shots';
 require('fs').mkdirSync(SHOTS, { recursive: true });
@@ -11,7 +13,8 @@ const results = [];
 const check = (name, ok, extra = '') => { results.push({ name, ok }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name} ${extra}`); };
 
 (async () => {
-  const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  const browser = await playwright[BROWSER].launch(BROWSER === 'chromium' && process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  console.log(`Browser: ${BROWSER} ${browser.version()}`);
   const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 } });
   const page = await ctx.newPage();
   const consoleErrors = [];
