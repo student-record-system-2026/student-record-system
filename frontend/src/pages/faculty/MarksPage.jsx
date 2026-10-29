@@ -115,7 +115,9 @@ export default function MarksPage() {
                             className="marks-input"
                             inputMode="decimal"
                             aria-label={`Marks for ${s.name}`}
-                            value={values[s.studentId] ?? ''}
+                            value={values[s.studentId] ?? (s.marks?.[componentId] === undefined || s.marks?.[componentId] === null
+                              ? ''
+                              : String(s.marks?.[componentId]))}
                             onChange={(e) => setValues((v) => ({ ...v, [s.studentId]: e.target.value }))}
                             aria-invalid={Boolean(rowErrors[s.studentId])}
                           />
