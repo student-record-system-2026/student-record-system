@@ -42,3 +42,17 @@ Layering (SADS §3.1): every feature goes **UI page → `api/client.js` → rout
 ## Test Plan seed data (Test Plan §12.1)
 
 `backend/db/seed.js` creates exactly the accounts and state the test cases assume: `admin01 / Admin@123`, `fac_krao / Faculty@123` (Dr. Kavita Rao — assigned UE24CS205 and UE24CS220, **not** UE24CS210), `stu_pnair / Student@123` (Priya Nair, roll PES1UG24CS045 — enrolled in UE24CS205, **not** UE24CS210). UE24CS205 has components IA1 (max 20), IA2 (20) and Assignment (10), with no 2026-09-10 session and no IA1 marks, so TC-05/TC-06 start clean. UE24CS301 and roll number PES1UG24CS099 are intentionally not seeded, because TC-03/TC-02 create them.
+
+---
+
+# Sprint 2: Requirement-to-Code Traceability
+
+| Issue | Requirement | Implemented / verified | Relevant files | Tests / evidence |
+|---|---|---|---|---|
+| **#23** | **FR-14** User Logout and Session Termination | Logout (built in Sprint 1 as an NFR-8 dependency) verified at the session-store level: the session row is deleted, the cookie is cleared, only the logged-out session ends, a new login gets a new session id, expired sessions are rejected; Log out available to every role in the UI | `B/controllers/authController.js`, `F/components/Layout.jsx`, `F/auth/AuthContext.jsx` | `backend/tests/integration/tc10.logout-lifecycle.test.js`, `frontend/tests/logout.test.jsx`; TC-07, TC-10 |
+| **#24** | **NFR-1** Performance | Page load times for every TC-08 page measured in a browser against the 3-second target with the 300-student dataset; API response times guarded in CI | — (measurement only) | `e2e/performance.test.js` → `docs/Sprint2/TC-08_Performance_Results.md`; `backend/tests/integration/tc08.performance.test.js`; TC-08 |
+| **#26** | **NFR-3** Usability | Walkthrough with three first-time users (one per role); automated pre-checks for reachability, labels, required markers and feedback messages | — (verification only) | `docs/Sprint2/TC-09_Usability_Walkthrough.md`; `frontend/tests/usability.test.jsx`; TC-09 steps 1–3 |
+| **#28** | **NFR-5** Maintainability and Modular Codebase | Code and module-organization review; layering and functional-area rules enforced in CI | `B/server.js` (header comment, finding F-01) | `docs/Sprint2/NFR-5_Maintainability_Review_Record.md`; `backend/tests/unit/architecture.test.js`, `frontend/tests/architecture.test.js`; Test Plan 12.4.3 |
+| **#29** | **NFR-6** Browser Portability | Login, dashboard, core screen and logout checked in Chrome and Firefox with the same build; full UI walkthrough runs in Chromium and Firefox in CI | `.github/workflows/e2e.yml`, `e2e/system.test.js` (browser selectable) | `e2e/portability.test.js` → `docs/Sprint2/TC-09_Browser_Results.md`; TC-09 steps 4–5 |
+
+All ten test cases and their actual results: [`docs/Sprint2/Test_Summary_Report.md`](Sprint2/Test_Summary_Report.md).
